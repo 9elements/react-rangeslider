@@ -1,9 +1,9 @@
 /* eslint no-debugger: "warn" */
 import cx from 'classnames'
-import React, { Component } from 'react'
+import React, {Component} from 'react'
 import PropTypes from 'prop-types'
 import ResizeObserver from 'resize-observer-polyfill'
-import { capitalize, clamp } from './utils'
+import {capitalize, clamp} from './utils'
 
 /**
  * Predefined constants
@@ -34,6 +34,7 @@ class Slider extends Component {
     value: PropTypes.number,
     orientation: PropTypes.string,
     tooltip: PropTypes.bool,
+    tooltipWithInput: PropTypes.bool,
     reverse: PropTypes.bool,
     labels: PropTypes.object,
     handleLabel: PropTypes.string,
@@ -167,7 +168,6 @@ class Slider extends Component {
    * @return {void}
    */
   handleKeyDown = e => {
-    e.preventDefault()
     const { keyCode } = e
     const { value, min, max, step, onChange } = this.props
     let sliderValue
@@ -175,11 +175,13 @@ class Slider extends Component {
     switch (keyCode) {
       case 38:
       case 39:
+        e.preventDefault()
         sliderValue = value + step > max ? max : value + step
         onChange && onChange(sliderValue, e)
         break
       case 37:
       case 40:
+        e.preventDefault()
         sliderValue = value - step < min ? min : value - step
         onChange && onChange(sliderValue, e)
         break
@@ -266,6 +268,15 @@ class Slider extends Component {
     }
   };
 
+  onInputChange = event => {
+    let value = parseFloat(event.target.value.replace(',', '.'))
+
+    if (isNaN(value)) value = this.props.value
+
+    event.target.value = `${Math.round(value * 100) / 100}`.replace('.', ',')
+    console.log(value)
+  };
+
   renderLabels = labels => (
     <ul
       ref={sl => {
@@ -287,7 +298,8 @@ class Slider extends Component {
       labels,
       min,
       max,
-      handleLabel
+      handleLabel,
+      tooltipWithInput
     } = this.props
     const { active } = this.state
     const dimension = constants.orientation[orientation].dimension
@@ -298,7 +310,7 @@ class Slider extends Component {
     const coords = this.coordinates(position)
     const fillStyle = { [dimension]: `${coords.fill}px` }
     const handleStyle = { [direction]: `${coords.handle}px` }
-    let showTooltip = tooltip && active
+    let showTooltip = tooltipWithInput || (tooltip && active)
 
     let labelItems = []
     let labelKeys = Object.keys(labels)
@@ -367,7 +379,11 @@ class Slider extends Component {
               }}
               className='rangeslider__handle-tooltip'
               >
-              <span>{this.handleFormat(value)}</span>
+              {
+                tooltipWithInput
+                ? <input onChange={this.onInputChange} value={this.handleFormat(value)} />
+                : <span>{this.handleFormat(value)}</span>
+              }
             </div>
             : null}
           <div className='rangeslider__handle-label'>{handleLabel}</div>
