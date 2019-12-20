@@ -56,6 +56,8 @@ class Slider extends Component {
     handleLabel: ''
   };
 
+  input = undefined
+
   constructor (props, context) {
     super(props, context)
 
@@ -107,6 +109,7 @@ class Slider extends Component {
    * @return {void}
    */
   handleStart = e => {
+    if (e.target.tagName === 'INPUT') return
     const { onChangeStart } = this.props
     document.addEventListener('mousemove', this.handleDrag)
     document.addEventListener('mouseup', this.handleEnd)
@@ -126,6 +129,7 @@ class Slider extends Component {
    * @return {void}
    */
   handleDrag = e => {
+    if (e.target.tagName === 'INPUT') return
     e.stopPropagation()
     const { onChange } = this.props
     const { target: { className, classList, dataset } } = e
@@ -141,7 +145,7 @@ class Slider extends Component {
       value = parseFloat(dataset.value)
     }
 
-    onChange && onChange(value, e)
+    this.changeValue(value, e)
   };
 
   /**
@@ -149,6 +153,7 @@ class Slider extends Component {
    * @return {void}
    */
   handleEnd = e => {
+    if (e.target.tagName === 'INPUT') return
     const { onChangeComplete } = this.props
     this.setState(
       {
@@ -168,8 +173,10 @@ class Slider extends Component {
    * @return {void}
    */
   handleKeyDown = e => {
+    if (e.target.tagName === 'INPUT') return
+
     const { keyCode } = e
-    const { value, min, max, step, onChange } = this.props
+    const { value, min, max, step } = this.props
     let sliderValue
 
     switch (keyCode) {
@@ -177,13 +184,15 @@ class Slider extends Component {
       case 39:
         e.preventDefault()
         sliderValue = value + step > max ? max : value + step
-        onChange && onChange(sliderValue, e)
+
+        this.changeValue(sliderValue, e)
         break
       case 37:
       case 40:
         e.preventDefault()
         sliderValue = value - step < min ? min : value - step
-        onChange && onChange(sliderValue, e)
+
+        this.changeValue(sliderValue, e)
         break
     }
   };
@@ -268,14 +277,37 @@ class Slider extends Component {
     }
   };
 
+  changeValue = (value, target) => {
+    const { onChange } = this.props
+    if (this.input) {
+      this.input.value = this.handleFormat(value)
+    }
+    onChange && onChange(value, target)
+  }
+
+  setInputRef = input => {
+    this.input = input
+    if (input) {
+      input.value = this.handleFormat(this.props.value)
+    }
+  }
+
   onInputChange = event => {
-    let value = parseFloat(event.target.value.replace(',', '.'))
+    const { min, max, step, onChange } = this.props
+    const value = parseFloat(event.target.value.replace(',', '.'))
+    const rounded = Math.round(value / step) * step
+    const clamped = clamp(rounded, min, max)
 
-    if (isNaN(value)) value = this.props.value
-
-    event.target.value = `${Math.round(value * 100) / 100}`.replace('.', ',')
-    console.log(value)
-  };
+    if (!isNaN(value)) {
+      if (rounded !== clamped) {
+        event.target.value = this.handleFormat(clamped);
+      }
+      onChange && onChange(clamped, event.target)
+      this.state.inputIsValid || this.setState({ inputIsValid: true })
+    } else {
+      this.state.inputIsValid && this.setState({ inputIsValid: false })
+    }
+  }
 
   renderLabels = labels => (
     <ul
@@ -381,7 +413,7 @@ class Slider extends Component {
               >
               {
                 tooltipWithInput
-                ? <input onChange={this.onInputChange} value={this.handleFormat(value)} />
+                ? <input onChange={this.onInputChange} ref={this.setInputRef} maxLength={4} />
                 : <span>{this.handleFormat(value)}</span>
               }
             </div>
