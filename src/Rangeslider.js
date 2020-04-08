@@ -81,7 +81,6 @@ class Slider extends Component {
    */
   handleFormat = value => {
     const { format } = this.props
-    console.log('handle format', value, format)
     return format ? format(value) : value
   };
 
@@ -322,8 +321,6 @@ class Slider extends Component {
   );
 
   render () {
-    console.log('render')
-
     const {
       value,
       orientation,
@@ -373,8 +370,6 @@ class Slider extends Component {
         )
       }
     }
-
-    console.log('render with value', value)
 
     return (
       <div
