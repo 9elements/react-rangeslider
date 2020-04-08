@@ -81,6 +81,7 @@ class Slider extends Component {
    */
   handleFormat = value => {
     const { format } = this.props
+    console.log('handle format', value, format)
     return format ? format(value) : value
   };
 
@@ -300,7 +301,7 @@ class Slider extends Component {
 
     if (!isNaN(value)) {
       if (rounded !== clamped) {
-        event.target.value = this.handleFormat(clamped);
+        event.target.value = this.handleFormat(clamped)
       }
       onChange && onChange(clamped, event.target)
       this.state.inputIsValid || this.setState({ inputIsValid: true })
@@ -321,6 +322,8 @@ class Slider extends Component {
   );
 
   render () {
+    console.log('render')
+
     const {
       value,
       orientation,
@@ -371,6 +374,8 @@ class Slider extends Component {
       }
     }
 
+    console.log('render with value', value)
+
     return (
       <div
         ref={s => {
@@ -413,7 +418,7 @@ class Slider extends Component {
               >
               {
                 tooltipWithInput
-                ? <input onChange={this.onInputChange} ref={this.setInputRef} maxLength={4} />
+                ? <input onChange={this.onInputChange} ref={this.setInputRef} maxLength={4} value={this.handleFormat(value)} />
                 : <span>{this.handleFormat(value)}</span>
               }
             </div>
